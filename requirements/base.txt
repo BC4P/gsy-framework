@@ -4,11 +4,10 @@
 #
 #    pip-compile --output-file=requirements/base.txt requirements/base.ini
 #
-attrs==21.2.0
+attrs==21.4.0
     # via jsonschema
-backports.entry-points-selectable==1.1.0
     # via virtualenv
-certifi==2021.10.8
+certifi==2022.5.18.1
     # via requests
 cfgv==3.3.1
     # via pre-commit
@@ -28,9 +27,9 @@ flake8-tuple==0.4.1
     # via -r requirements/base.ini
 identify==2.3.3
     # via pre-commit
-idna==2.10
+idna==3.3
     # via requests
-jsonschema==4.1.2
+jsonschema==3.2.0
     # via -r requirements/base.ini
 kafka-python==2.0.2
     # via -r requirements/base.ini
@@ -38,35 +37,35 @@ mccabe==0.6.1
     # via flake8
 nodeenv==1.6.0
     # via pre-commit
-packaging==21.2
+packaging==21.3
     # via tox
 pendulum==2.1.2
     # via -r requirements/base.ini
-platformdirs==2.4.0
+platformdirs==2.5.2
     # via virtualenv
 pluggy==1.0.0
     # via tox
 pre-commit==2.15.0
     # via -r requirements/base.ini
-py==1.10.0
+py==1.11.0
     # via tox
 pycodestyle==2.8.0
     # via flake8
 pyflakes==2.4.0
     # via flake8
-pyparsing==2.4.7
+pyparsing==3.0.9
     # via packaging
-pyrsistent==0.18.0
+pyrsistent==0.18.1
     # via jsonschema
-python-dateutil==2.8.2
+python-dateutil==2.8.1
     # via pendulum
 pytzdata==2020.1
     # via pendulum
-pyyaml==6.0
+pyyaml==5.4.1
     # via pre-commit
 redis==3.5.3
     # via -r requirements/base.ini
-requests==2.25.1
+requests==2.27.1
     # via -r requirements/base.ini
 six==1.16.0
     # via
@@ -82,11 +81,11 @@ toml==0.10.2
     #   tox
 tox==3.24.4
     # via -r requirements/base.ini
-urllib3==1.26.7
+urllib3==1.26.9
     # via requests
 virtualenv==20.10.0
     # via
     #   pre-commit
     #   tox
-websockets==10.0
+websockets==9.1
     # via -r requirements/base.ini
