@@ -357,13 +357,7 @@ class KPI(ResultsBaseClass):
             2. calculate base_case_cost, saving_absolute, saving_percentage for the area and
                add them to the self.performance_indices
         """
-        if not area_dict.get("children"):
-            return
-        if not area_dict.get("parent_uuid"):
-            # savings KPIs for the root area are not of interest and are removed
-            self.performance_indices[area_dict["uuid"]].pop("utility_bill", None)
-            self.performance_indices[area_dict["uuid"]].pop("fit_revenue", None)
-            self.performance_indices[area_dict["uuid"]].pop("gsy_e_cost", None)
+        if not area_dict.get("children") or area_dict["uuid"] not in self.savings_state:
             return
 
         for child in area_dict["children"]:
@@ -411,12 +405,12 @@ class KPI(ResultsBaseClass):
         if area_dict["uuid"] not in self.savings_state:
             self.savings_state[area_dict["uuid"]] = SavingsKPI()
             self.savings_state[area_dict["uuid"]].utility_bill = (
-                last_known_state_data.get("utility_bill", 0))
+                last_known_state_data.get("utility_bill", 0)) or 0
             self.savings_state[area_dict["uuid"]].fit_revenue = (
-                last_known_state_data.get("fit_revenue", 0))
+                last_known_state_data.get("fit_revenue", 0)) or 0
             self.savings_state[area_dict["uuid"]].gsy_e_cost = (
                 last_known_state_data.get("gsy_e_cost", 0)
-                or last_known_state_data.get("d3a_cost", 0))
+                or last_known_state_data.get("d3a_cost", 0)) or 0
 
     @staticmethod
     def merge_results_to_global(market_device: Dict, global_device: Dict, *_):
