@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 try:
-    with open("requirements/base.txt", encoding="utf-8") as req:
+    with open("requirements/base.in", encoding="utf-8") as req:
         REQUIREMENTS = [r.partition("#")[0] for r in req if not r.startswith("-e")]
 except OSError:
     # Shouldn't happen
