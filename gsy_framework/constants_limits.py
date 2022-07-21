@@ -224,6 +224,10 @@ class ConstSettings:
         # Adds flexible load support.
         FLEXIBLE_LOADS_SUPPORT = True
 
+    class SCMSettings:
+        """Default settings for the community manager."""
+        GRID_FEES_REDUCTION = 0.28
+
 
 class GlobalConfig:
     """Parameters that affect each area individually."""
@@ -278,3 +282,5 @@ JWT_TOKEN_EXPIRY_IN_SECS = 48 * 3600
 
 DEFAULT_PRECISION = 8
 FLOATING_POINT_TOLERANCE = 0.00001
+
+FIELDS_REQUIRED_FOR_REBASE = ("capacity_kW", "tilt", "azimuth", "geo_tag_location")
