@@ -1,9 +1,13 @@
 import configparser
 
 from influxdb import DataFrameClient
+import os 
 
 class InfluxConnection:
-    def __init__(self, path_influx_config: str):
+    def __init__(self, name_influx_config: str):
+
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        path_influx_config = os.path.join(dir_path, "resources", name_influx_config)
         config = configparser.ConfigParser()
         config.read(path_influx_config)
 

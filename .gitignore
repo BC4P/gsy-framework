@@ -17,3 +17,5 @@ build/
 
 # iSort configuration
 .isort.cfg
+
+gsy_framework/influx_connection/resources/*.cfg
