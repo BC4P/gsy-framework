@@ -24,17 +24,3 @@ class InfluxConnection:
 
     def getDBName(self):
         return self.db
-
-class InfluxQuery:
-    def __init__(self, influxConnection: InfluxConnection):
-        self.connection = influxConnection
-    
-    def set(self, querystring: str):
-        self.qstring = querystring
-
-    def exec(self):
-        self.qresults = self.connection.query(self.qstring)
-        return self._process()
-
-    def _process(self):
-        pass
