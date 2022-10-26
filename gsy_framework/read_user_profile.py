@@ -123,6 +123,7 @@ def _readCSV(path: str) -> Dict:
     :param path: path to csv file
     :return: Dict[DateTime, value]
     """
+    print(f'read csv in {path}')
     profile_data = {}
     with open(path) as csv_file:
         csv_rows = csv.reader(csv_file)
@@ -136,6 +137,7 @@ def _readCSV(path: str) -> Dict:
                 profile_data[row[0]] = float(row[1])
             except ValueError:
                 pass
+    print(profile_data.items())
     time_format = _eval_time_format(profile_data)
     return dict((_str_to_datetime(time_str, time_format), value)
                 for time_str, value in profile_data.items())
