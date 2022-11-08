@@ -12,6 +12,9 @@ class InfluxQuery:
         self.qresults = self.connection.query(self.qstring)
         return self._process()
 
+    def getQueryString(self):
+        return self.qstring
+
     def _process(self):
         pass
 
