@@ -1,8 +1,11 @@
 import os
 
+from pendulum import duration
+
 from gsy_framework.influx_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
-from pendulum import duration
+from gsy_e.gsy_e_core.util import d3a_path
+
 class InfluxQuery:
     def __init__(self, influxConnection: InfluxConnection):
         self.connection = influxConnection
