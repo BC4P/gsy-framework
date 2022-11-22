@@ -1,3 +1,5 @@
+import os
+
 from gsy_framework.influx_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
 from pendulum import duration
