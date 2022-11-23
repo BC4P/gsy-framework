@@ -17,3 +17,24 @@ build/
 
 # iSort configuration
 .isort.cfg
+.idea
+.tox
+
+# Coverage reports
+.coverage
+.coverage.*
+coverage.xml
+.coverage*
+
+# pyenv
+.python-version
+
+dist
+*.egg-info
+__pycache__
+build/
+
+# iSort configuration
+.isort.cfg
+
+gsy_framework/influx_connection/resources/*.cfg
