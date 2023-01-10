@@ -1,10 +1,16 @@
 import configparser
 
 from influxdb import DataFrameClient
+import os 
 
 class InfluxConnection:
-    def __init__(self, path_influx_config: str):
+    def __init__(self, name_influx_config: str):
+
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        path_influx_config = os.path.join(dir_path, "resources", name_influx_config)
         config = configparser.ConfigParser()
+        if not os.path.isfile(path_influx_config):
+            raise Exception(f"File {path_influx_config} does not exist")
         config.read(path_influx_config)
 
         self.client = DataFrameClient(
@@ -24,17 +30,3 @@ class InfluxConnection:
 
     def getDBName(self):
         return self.db
-
-class InfluxQuery:
-    def __init__(self, influxConnection: InfluxConnection):
-        self.connection = influxConnection
-    
-    def set(self, querystring: str):
-        self.qstring = querystring
-
-    def exec(self):
-        self.qresults = self.connection.query(self.qstring)
-        return self._process()
-
-    def _process(self):
-        pass
