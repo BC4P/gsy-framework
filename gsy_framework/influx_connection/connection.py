@@ -9,6 +9,8 @@ class InfluxConnection:
         dir_path = os.path.dirname(os.path.realpath(__file__))
         path_influx_config = os.path.join(dir_path, "resources", name_influx_config)
         config = configparser.ConfigParser()
+        if not os.path.isfile(path_influx_config):
+            raise Exception(f"File {path_influx_config} does not exist")
         config.read(path_influx_config)
 
         self.client = DataFrameClient(
