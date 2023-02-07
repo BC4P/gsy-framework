@@ -8,8 +8,9 @@ class DataQueryPXL(DataQuery):
                         tablename: str,
                         duration = GlobalConfig.sim_duration,
                         start = GlobalConfig.start_date,
-                        interval = GlobalConfig.slot_length.in_minutes()):
-        super().__init__(influxConnection)
+                        interval = GlobalConfig.slot_length.in_minutes(),
+                        multiplier = 1.0):
+        super().__init__(influxConnection, multiplier)
 
         end = start + duration
         qstring = f'SELECT mean("{power_column}") FROM "{tablename}" WHERE time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m) fill(0)'
