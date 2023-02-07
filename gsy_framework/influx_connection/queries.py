@@ -1,31 +1,9 @@
-<<<<<<< HEAD
-from gsy_framework.influx_connection.connection import InfluxConnection
-=======
-import os
-
-from pendulum import duration
-
 from gsy_framework.influx_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
-from gsy_e.gsy_e_core.util import d3a_path
->>>>>>> 7bfe6fcb267c2b1b0e124916fe9bd42ad7a9ebf6
-
+from pendulum import duration
 class InfluxQuery:
     def __init__(self, influxConnection: InfluxConnection):
         self.connection = influxConnection
-<<<<<<< HEAD
-    
-    def set(self, querystring: str):
-        self.qstring = querystring
-
-    def exec(self):
-        self.qresults = self.connection.query(self.qstring)
-        print(self.qresults)
-        return self._process()
-
-    def _process(self):
-        pass
-=======
         self.qstring = self.query_string()
     
     def exec(self):
@@ -37,37 +15,10 @@ class InfluxQuery:
                 interval = GlobalConfig.slot_length.in_minutes(),
                 ):
         return ''
->>>>>>> 7bfe6fcb267c2b1b0e124916fe9bd42ad7a9ebf6
 
 class RawQuery(InfluxQuery):
     def __init__(self, influxConnection: InfluxConnection, querystring: str, procFunc):
         super().__init__(influxConnection)
-<<<<<<< HEAD
-        self.set(querystring)
-        self.procFunc = procFunc
-
-    def _process(self):
-        return self.procFunc(self.qresults)
-
-
-class DataQuery(InfluxQuery):
-<<<<<<< Updated upstream
-    def __init__(self, influxConnection: InfluxConnection):
-=======
-    def __init__(self, influxConnection: InfluxConnection, multiplier=1.0):
-        self.multiplier = multiplier
->>>>>>> Stashed changes
-        super().__init__(influxConnection)
-
-    def _process(self):
-        # Get DataFrame from result
-        if(len(list(self.qresults.values())) != 1):
-            return False;
-
-        df = list(self.qresults.values())[0]
-
-        df.reset_index(level=0, inplace=True)
-=======
         self.qstring = querystring
         self.procFunc = procFunc
 
@@ -92,30 +43,15 @@ class DataQuery(InfluxQuery):
         df = list(qresults.values())[0]
 
         df = df.reset_index(level=0)
->>>>>>> 7bfe6fcb267c2b1b0e124916fe9bd42ad7a9ebf6
 
         # remove day from time data
         df["index"] = df["index"].map(lambda x: x.strftime("%H:%M"))
 
         # remove last row
-<<<<<<< HEAD
-        df.drop(df.tail(1).index, inplace=True)
-
-        # convert to dictionary
-        df.set_index("index", inplace=True)
-<<<<<<< Updated upstream
-        ret = df.to_dict().get("mean")
-        return ret
-=======
-<<<<<<< HEAD
-
-        #apply multiplier
-=======
         df = df.drop(df.tail(1).index)
 
         # set index to allow converting to dictionary
         df = df.set_index("index")
->>>>>>> master
         df["mean"]  = df["mean"]  * self.multiplier
 
         ret = df.to_dict().get("mean")
@@ -126,18 +62,6 @@ class DataQueryMQTT(DataQuery):
                         power_column: str,
                         device: str,
                         tablename: str,
-<<<<<<< HEAD
-                        duration = GlobalConfig.sim_duration,
-                        start = GlobalConfig.start_date,
-                        interval = GlobalConfig.slot_length.in_minutes(),
-                        multiplier=1.0):
-        super().__init__(influxConnection, multiplier)
-
-        end = start + duration
-        qstring = f'SELECT mean("{power_column}") FROM "{tablename}" WHERE "device" =~ /^{device}$/ AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m) fill(0)'
-        self.set(qstring)
->>>>>>> Stashed changes
-=======
                         multiplier=1):
         self.power_column = power_column
         self.device = device
@@ -150,6 +74,4 @@ class DataQueryMQTT(DataQuery):
                 interval = GlobalConfig.slot_length.in_minutes(),
                 ):
         end = start + duration
-        return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "device" =~ /^{self.device}$/ AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m) fill(0)'
->>>>>>> 7bfe6fcb267c2b1b0e124916fe9bd42ad7a9ebf6
->>>>>>> master
+        return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "device" =~ /^{self.device}$/ AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({self.interval}m) fill(0)'
