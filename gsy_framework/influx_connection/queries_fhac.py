@@ -1,35 +1,35 @@
-from gsy_framework.influx_connection.queries import InfluxQuery, DataQuery, QueryAggregated
+from gsy_framework.influx_connection.queries import RawQuery, DataQuery, QueryAggregated
 from gsy_framework.influx_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
-import pandas as pd
 from pendulum import duration
 
-class SmartmeterIDQuery(InfluxQuery):
+class SmartmeterIDQuery(RawQuery):
     def __init__(self, influxConnection: InfluxConnection, keyname: str):
-        super().__init__(influxConnection)
-        self.qstring = f'SHOW TAG VALUES ON "{self.connection.getDBName()}" WITH KEY IN ("{keyname}")'
+        qstring = f'SHOW TAG VALUES ON "{self.connection.getDBName()}" WITH KEY IN ("{keyname}")'
 
-    def exec(self):
-        qresults = super().exec()
-        points = list(qresults.get_points())
-        return [point["value"] for point in points]
+        def transform():
+            return [point["value"] for point in list(self.qresults.get_points())]
+            
+        super().__init__(influxConnection, qstring, transform)
 
-
-class SingleDataPointQuery(InfluxQuery):
-    def __init__(self, influxConnection: InfluxConnection,
-                        power_column: str,
-                        tablename: str,
-                        smartmeterID: str,
-                        slot_length = GlobalConfig.slot_length):
-        super().__init__(influxConnection)
-
-        self.qstring = f'SELECT mean("{power_column}") FROM "{tablename}" WHERE "id" = \'{smartmeterID}\' AND time >= now() - {slot_length.in_minutes()}m'
     
-    def exec(self):
-        qresults = super().exec()
-        value_list = list(qresults.values())[0]
-        value_list.reset_index(level=0, inplace=True)
-        return value_list["index"][0], value_list["mean"][0]
+
+
+# class SingleDataPointQuery(Query):
+#     def __init__(self, influxConnection: InfluxConnection,
+#                         power_column: str,
+#                         tablename: str,
+#                         smartmeterID: str,
+#                         slot_length = GlobalConfig.slot_length):
+#         super().__init__(influxConnection)
+
+#         self.qstring = f'SELECT mean("{power_column}") FROM "{tablename}" WHERE "id" = \'{smartmeterID}\' AND time >= now() - {slot_length.in_minutes()}m'
+    
+#     def exec(self):
+#         qresults = super().exec()
+#         value_list = list(qresults.values())[0]
+#         value_list.reset_index(level=0, inplace=True)
+#         return value_list["index"][0], value_list["mean"][0]
 
 
 
@@ -38,32 +38,30 @@ class DataQueryFHAachen(DataQuery):
                         power_column: str,
                         tablename: str,
                         smartmeterID: str,
-                        multiplier=1):
+                        multiplier=1.0,
+                        duration = duration(days=1),
+                        start = GlobalConfig.start_date,
+                        interval = GlobalConfig.slot_length.in_minutes()
+                        ):
         self.power_column = power_column
         self.smartmeterID = smartmeterID
         self.tablename = tablename
-        super().__init__(influxConnection,multiplier)
+        super().__init__(influxConnection, duration, start, interval, multiplier)
 
-    def query_string(self,
-                duration = duration(days=1),
-                start = GlobalConfig.start_date,
-                interval = GlobalConfig.slot_length.in_minutes(),
-                ):
-        end = start + duration
-        return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "id" = \'{self.smartmeterID}\' AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m) fill(0)'
+    def query_string(self):
+        self.qstring = f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "id" = \'{self.smartmeterID}\' AND time >= \'{self.start.to_datetime_string()}\' AND time <= \'{self.end.to_datetime_string()}\' GROUP BY time({self.nterval}m) fill(0)'
 
 class DataFHAachenAggregated(QueryAggregated):
     def __init__(self, influxConnection: InfluxConnection,
                         power_column: str,
-                        tablename: str):
+                        tablename: str,
+                        duration = duration(days=1),
+                        start = GlobalConfig.start_date,
+                        interval = GlobalConfig.slot_length.in_minutes()
+                        ):
         self.power_column = power_column
         self.tablename = tablename
-        super().__init__(influxConnection)
+        super().__init__(influxConnection, duration, start, interval)
 
-    def query_string(self,
-                duration = duration(days=1),
-                start = GlobalConfig.start_date,
-                interval = GlobalConfig.slot_length.in_minutes(),
-                ):
-        end = start + duration
-        return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m), "id" fill(0)'
+    def query_string(self):
+        self.qstring = f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE time >= \'{self.start.to_datetime_string()}\' AND time <= \'{self.end.to_datetime_string()}\' GROUP BY time({self.interval}m), "id" fill(0)'

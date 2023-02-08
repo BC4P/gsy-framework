@@ -5,23 +5,43 @@ import pandas as pd
 import os
 import pathlib
 
-class InfluxQuery:
-    def __init__(self, influxConnection: InfluxConnection):
+# abstract base query class
+class Query:
+    def __init__(self, influxConnection: InfluxConnection, duration, start, interval):
         self.connection = influxConnection
-        self.qstring = self.query_string()
+        self._set_time(duration, start, interval)
+        self.query_string()
+
+    def _set_time(self, duration, start, interval):
+        self.duration = duration
+        self.start = start
+        self.interval = interval
+        self.end = self.start + self.duration
+
+    def update_query(self, duration, start, interval):
+        self._set_time(duration, start, interval)
+        self.query_string()
     
+    #executes query
     def exec(self):
-        return self.connection.query(self.qstring)
+        self.qresults = self.connection.query(self.qstring)
+        return self.transform()
 
-    def query_string(self,
-                duration = duration(days=1),
-                start = GlobalConfig.start_date,
-                interval = GlobalConfig.slot_length.in_minutes(),
-                ):
-        return ''
+    def get_query_string(self):
+        return self.qstring
+    
+    # defines query string: overwrite this class
+    def query_string(self):
+        self.qstring = ""
 
-class RawQuery(InfluxQuery):
-    def __init__(self, influxConnection: InfluxConnection, querystring: str, procFunc):
+    # transforms results of query to dict class, that gets returned: overwrite this class
+    def transform(self):
+        return self.qresults
+
+
+# raw query class (overwriting query string and transformation fucntion with a provided one)
+class RawQuery(Query):
+    def __init__(self, influxConnection: InfluxConnection, querystring: str, trans_func):
         super().__init__(influxConnection)
         self.qstring = querystring
         self.procFunc = procFunc
@@ -31,20 +51,21 @@ class RawQuery(InfluxQuery):
         return self.procFunc(qresults)
 
 
-class DataQuery(InfluxQuery):
-    def __init__(self, influxConnection: InfluxConnection, multiplier=1):
+# abstract class for data from single meter
+class DataQuery(Query):
+    def __init__(self, 
+                influxConnection: InfluxConnection, duration, start, interval, multiplier):
         self.multiplier = multiplier
-        super().__init__(influxConnection)
+        super().__init__(influxConnection, duration, start, interval)
 
-    def exec(self):
-        qresults = super().exec()
+    def transform(self):
         # Get DataFrame from result
-        if(len(list(qresults.values())) != 1):
+        if(len(list(self.qresults.values())) != 1):
             print("Load Profile for Query:\n" + self.qstring + "\nnot valid. Using Zero Curve.")
             return os.path.join(pathlib.Path(__file__).parent.resolve(), "resources", "Zero_Curve.csv")
             
 
-        df = list(qresults.values())[0]
+        df = list(self.qresults.values())[0]
 
         df = df.reset_index(level=0)
 
@@ -61,39 +82,19 @@ class DataQuery(InfluxQuery):
         ret = df.to_dict().get("mean")
         return ret
 
-class DataQueryMQTT(DataQuery):
-    def __init__(self, influxConnection: InfluxConnection,
-                        power_column: str,
-                        device: str,
-                        tablename: str,
-                        multiplier=1):
-        self.power_column = power_column
-        self.device = device
-        self.tablename = tablename
-        super().__init__(influxConnection, multiplier)
-    
-    def query_string(self,
-                duration = duration(days=1),
-                start = GlobalConfig.start_date,
-                interval = GlobalConfig.slot_length.in_minutes(),
-                ):
-        end = start + duration
-        return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "device" =~ /^{self.device}$/ AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({self.interval}m) fill(0)'
 
-class QueryAggregated(InfluxQuery):
-    def __init__(self, influxConnection: InfluxConnection):
-        super().__init__(influxConnection)
+# abstract class for aggregated data from multiple meters
+class QueryAggregated(Query):
+    def __init__(self, influxConnection: InfluxConnection, duration, start, interval):
+        super().__init__(influxConnection, duration, start, interval)
 
-    def exec(self):
-        qresults = super().exec()
-        print(qresults)
-        
-        if(len(qresults.values()) == 0):
+    def transform(self):
+        if(len(self.qresults.values()) == 0):
             print("Load Profile for Query:\n" + self.qstring + "\nnot valid. Using Zero Curve.")
             return os.path.join(pathlib.Path(__file__).parent.resolve(), "resources", "Zero_Curve.csv")
 
         # sum smartmeters
-        df = pd.concat(qresults.values(), axis=1)
+        df = pd.concat(self.qresults.values(), axis=1)
         df = df.sum(axis=1).to_frame("W")
 
         df.reset_index(level=0, inplace=True)
@@ -110,3 +111,21 @@ class QueryAggregated(InfluxQuery):
         df_dict = df.to_dict().get("W")
 
         return df_dict
+
+# query for single MQTT devices 
+class DataQueryMQTT(DataQuery):
+    def __init__(self, influxConnection: InfluxConnection,
+                        power_column: str,
+                        device: str,
+                        tablename: str,
+                        duration = duration(days=1),
+                        start = GlobalConfig.start_date,
+                        interval = GlobalConfig.slot_length.in_minutes(),
+                        multiplier=1.0):
+        self.power_column = power_column
+        self.device = device
+        self.tablename = tablename
+        super().__init__(influxConnection, duration, start, interval, multiplier)
+    
+    def query_string(self):
+        self.qstring = f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "device" =~ /^{self.device}$/ AND time >= \'{self.start.to_datetime_string()}\' AND time <= \'{self.end.to_datetime_string()}\' GROUP BY time({self.interval}m) fill(0)'

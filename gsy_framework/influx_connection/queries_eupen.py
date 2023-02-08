@@ -16,12 +16,7 @@ class DataQueryEupen(QueryAggregated):
         self.tablename = tablename
         self.key = key
         self.location = location
-        super().__init__(influxConnection)
+        super().__init__(influxConnection, duration, start, interval)
         
-    def query_string(self,
-                duration = duration(days=1),
-                start = GlobalConfig.start_date,
-                interval = GlobalConfig.slot_length.in_minutes(),
-                ):
-        end = start + duration
-        return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE ("Location" = \'{self.location}\' AND "Key" = \'{self.key}\') AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m), "Meter" fill(0)'
+    def query_string(self):
+        self.qstring = f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE ("Location" = \'{self.location}\' AND "Key" = \'{self.key}\') AND time >= \'{self.start.to_datetime_string()}\' AND time <= \'{self.end.to_datetime_string()}\' GROUP BY time({self.interval}m), "Meter" fill(0)'
