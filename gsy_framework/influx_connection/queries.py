@@ -2,6 +2,8 @@ from gsy_framework.influx_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
 from pendulum import duration
 import pandas as pd
+import os
+import pathlib
 
 class InfluxQuery:
     def __init__(self, influxConnection: InfluxConnection):
@@ -39,7 +41,7 @@ class DataQuery(InfluxQuery):
         # Get DataFrame from result
         if(len(list(qresults.values())) != 1):
             print("Load Profile for Query:\n" + self.qstring + "\nnot valid. Using Zero Curve.")
-            return os.path.join(d3a_path, "resources", "Zero_Curve.csv")
+            return os.path.join(pathlib.Path(__file__).parent.resolve(), "resources", "Zero_Curve.csv")
             
 
         df = list(qresults.values())[0]
@@ -84,10 +86,11 @@ class QueryAggregated(InfluxQuery):
 
     def exec(self):
         qresults = super().exec()
+        print(qresults)
         
         if(len(qresults.values()) == 0):
             print("Load Profile for Query:\n" + self.qstring + "\nnot valid. Using Zero Curve.")
-            return os.path.join(d3a_path, "resources", "Zero_Curve.csv")
+            return os.path.join(pathlib.Path(__file__).parent.resolve(), "resources", "Zero_Curve.csv")
 
         # sum smartmeters
         df = pd.concat(qresults.values(), axis=1)

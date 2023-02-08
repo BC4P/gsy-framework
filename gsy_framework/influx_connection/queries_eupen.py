@@ -1,7 +1,6 @@
 from gsy_framework.influx_connection.queries import QueryAggregated
 from gsy_framework.influx_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
-import pandas as pd
 from pendulum import duration
 
 class DataQueryEupen(QueryAggregated):
