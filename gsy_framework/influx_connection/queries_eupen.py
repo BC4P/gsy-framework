@@ -1,9 +1,10 @@
-from gsy_framework.influx_connection.queries import InfluxQuery
+from gsy_framework.influx_connection.queries import QueryAggregated
 from gsy_framework.influx_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
 import pandas as pd
+from pendulum import duration
 
-class DataQueryEupen(InfluxQuery):
+class DataQueryEupen(QueryAggregated):
     def __init__(self, influxConnection: InfluxConnection,
                         power_column: str,
                         location: str,
@@ -24,24 +25,4 @@ class DataQueryEupen(InfluxQuery):
                 interval = GlobalConfig.slot_length.in_minutes(),
                 ):
         end = start + duration
-        return f'SELECT mean("{power_column}") FROM "{tablename}" WHERE ("Location" = \'{location}\' AND "Key" = \'{key}\') AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m), "Meter" fill(0)'
-
-    def _process(self):
-        # sum smartmeters
-        df = pd.concat(self.qresults.values(), axis=1)
-        df = df.sum(axis=1).to_frame("W")
-
-        df.reset_index(level=0, inplace=True)
-
-        # remove day from time data
-        df["index"] = df["index"].map(lambda x: x.strftime("%H:%M"))
-
-        # remove last row
-        df.drop(df.tail(1).index, inplace=True)
-        
-
-        # convert to dictionary
-        df.set_index("index", inplace=True)
-        df_dict = df.to_dict().get("W")
-
-        return df_dict
+        return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE ("Location" = \'{self.location}\' AND "Key" = \'{self.key}\') AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m), "Meter" fill(0)'

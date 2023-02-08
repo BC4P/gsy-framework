@@ -1,4 +1,4 @@
-from gsy_framework.influx_connection.queries import InfluxQuery, DataQuery
+from gsy_framework.influx_connection.queries import InfluxQuery, DataQuery, QueryAggregated
 from gsy_framework.influx_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
 import pandas as pd
@@ -52,7 +52,7 @@ class DataQueryFHAachen(DataQuery):
         end = start + duration
         return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "id" = \'{self.smartmeterID}\' AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m) fill(0)'
 
-class DataFHAachenAggregated(InfluxQuery):
+class DataFHAachenAggregated(QueryAggregated):
     def __init__(self, influxConnection: InfluxConnection,
                         power_column: str,
                         tablename: str):
@@ -67,24 +67,3 @@ class DataFHAachenAggregated(InfluxQuery):
                 ):
         end = start + duration
         return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({interval}m), "id" fill(0)'
-
-    def exec(self):
-        qresults = super().exec()
-        # sum smartmeters
-        df = pd.concat(qresults.values(), axis=1)
-        df = df.sum(axis=1).to_frame("W")
-
-        df.reset_index(level=0, inplace=True)
-
-        # remove day from time data
-        df["index"] = df["index"].map(lambda x: x.strftime("%H:%M"))
-
-        # remove last row
-        df.drop(df.tail(1).index, inplace=True)
-        
-
-        # convert to dictionary
-        df.set_index("index", inplace=True)
-        df_dict = df.to_dict().get("W")
-
-        return df_dict

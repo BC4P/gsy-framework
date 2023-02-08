@@ -1,6 +1,8 @@
 from gsy_framework.influx_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
 from pendulum import duration
+import pandas as pd
+
 class InfluxQuery:
     def __init__(self, influxConnection: InfluxConnection):
         self.connection = influxConnection
@@ -75,3 +77,33 @@ class DataQueryMQTT(DataQuery):
                 ):
         end = start + duration
         return f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "device" =~ /^{self.device}$/ AND time >= \'{start.to_datetime_string()}\' AND time <= \'{end.to_datetime_string()}\' GROUP BY time({self.interval}m) fill(0)'
+
+class QueryAggregated(InfluxQuery):
+    def __init__(self, influxConnection: InfluxConnection):
+        super().__init__(influxConnection)
+
+    def exec(self):
+        qresults = super().exec()
+        
+        if(len(qresults.values()) == 0):
+            print("Load Profile for Query:\n" + self.qstring + "\nnot valid. Using Zero Curve.")
+            return os.path.join(d3a_path, "resources", "Zero_Curve.csv")
+
+        # sum smartmeters
+        df = pd.concat(qresults.values(), axis=1)
+        df = df.sum(axis=1).to_frame("W")
+
+        df.reset_index(level=0, inplace=True)
+
+        # remove day from time data
+        df["index"] = df["index"].map(lambda x: x.strftime("%H:%M"))
+
+        # remove last row
+        df.drop(df.tail(1).index, inplace=True)
+        
+
+        # convert to dictionary
+        df.set_index("index", inplace=True)
+        df_dict = df.to_dict().get("W")
+
+        return df_dict
