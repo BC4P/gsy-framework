@@ -9,3 +9,6 @@ websockets
 requests>=2.25.1
 kafka-python
 tabulate
+pandas
+influxdb
+psycopg2-binary

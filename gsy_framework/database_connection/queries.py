@@ -1,4 +1,4 @@
-from gsy_framework.influx_connection.connection import InfluxConnection
+from gsy_framework.database_connection.connection import Connection, InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
 from pendulum import duration
 import pandas as pd
@@ -7,8 +7,8 @@ import pathlib
 
 # abstract base query class
 class Query:
-    def __init__(self, influxConnection: InfluxConnection, duration, start, interval):
-        self.connection = influxConnection
+    def __init__(self, connection: Connection, duration, start, interval):
+        self.connection = connection
         self._set_time(duration, start, interval)
         self.query_string()
 
@@ -18,7 +18,10 @@ class Query:
         self.interval = interval
         self.end = self.start + self.duration
 
-    def update_query(self, duration, start, interval):
+    def update_query(self, 
+                duration = duration(days=1),
+                start = GlobalConfig.start_date,
+                interval = GlobalConfig.slot_length.in_minutes()):
         self._set_time(duration, start, interval)
         self.query_string()
     
@@ -41,8 +44,8 @@ class Query:
 
 # raw query class (overwriting query string and transformation fucntion with a provided one)
 class RawQuery(Query):
-    def __init__(self, influxConnection: InfluxConnection, querystring: str, trans_func):
-        super().__init__(influxConnection)
+    def __init__(self, connection: Connection, querystring: str, trans_func):
+        super().__init__(connection)
         self.qstring = querystring
         self.procFunc = procFunc
 
@@ -53,10 +56,9 @@ class RawQuery(Query):
 
 # abstract class for data from single meter
 class DataQuery(Query):
-    def __init__(self, 
-                influxConnection: InfluxConnection, duration, start, interval, multiplier):
+    def __init__(self, connection: Connection, duration, start, interval, multiplier):
         self.multiplier = multiplier
-        super().__init__(influxConnection, duration, start, interval)
+        super().__init__(connection, duration, start, interval)
 
     def transform(self):
         # Get DataFrame from result
@@ -85,8 +87,8 @@ class DataQuery(Query):
 
 # abstract class for aggregated data from multiple meters
 class QueryAggregated(Query):
-    def __init__(self, influxConnection: InfluxConnection, duration, start, interval):
-        super().__init__(influxConnection, duration, start, interval)
+    def __init__(self, connection: Connection, duration, start, interval):
+        super().__init__(connection, duration, start, interval)
 
     def transform(self):
         if(len(self.qresults.values()) == 0):
