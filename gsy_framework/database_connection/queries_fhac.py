@@ -1,9 +1,11 @@
-from gsy_framework.database_connection.queries import RawQuery, DataQuery, QueryAggregated
-from gsy_framework.database_connection.connection import InfluxConnection
+from gsy_framework.database_connection.queries_base import QueryRaw
+from gsy_framework.database_connection.queries_influx import QuerySingle, QueryAggregated
+from gsy_framework.database_connection.queries_postgresql import QueryPostgresSQL
+from gsy_framework.database_connection.connection import InfluxConnection, PostgreSQLConnection
 from gsy_framework.constants_limits import GlobalConfig
 from pendulum import duration
 
-class SmartmeterIDQuery(RawQuery):
+class QuerySmartmeterID(QueryRaw):
     def __init__(self, influxConnection: InfluxConnection, keyname: str):
         qstring = f'SHOW TAG VALUES ON "{self.connection.getDBName()}" WITH KEY IN ("{keyname}")'
 
@@ -33,7 +35,7 @@ class SmartmeterIDQuery(RawQuery):
 
 
 
-class DataQueryFHAachen(DataQuery):
+class QueryFHAC(QuerySingle):
     def __init__(self, influxConnection: InfluxConnection,
                         power_column: str,
                         tablename: str,
@@ -51,7 +53,7 @@ class DataQueryFHAachen(DataQuery):
     def query_string(self):
         self.qstring = f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "id" = \'{self.smartmeterID}\' AND time >= \'{self.start.to_datetime_string()}\' AND time <= \'{self.end.to_datetime_string()}\' GROUP BY time({self.nterval}m) fill(0)'
 
-class DataFHAachenAggregated(QueryAggregated):
+class QueryFHACAggregated(QueryAggregated):
     def __init__(self, influxConnection: InfluxConnection,
                         power_column: str,
                         tablename: str,
@@ -65,3 +67,20 @@ class DataFHAachenAggregated(QueryAggregated):
 
     def query_string(self):
         self.qstring = f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE time >= \'{self.start.to_datetime_string()}\' AND time <= \'{self.end.to_datetime_string()}\' GROUP BY time({self.interval}m), "id" fill(0)'
+
+class QueryFHACPV(QueryPostgresSQL):
+    def __init__(self, postgresConnection: PostgreSQLConnection,
+                        power_column: str,
+                        tablename: str,
+                        duration = duration(days=1),
+                        start = GlobalConfig.start_date,
+                        interval = GlobalConfig.slot_length.in_minutes()
+                        ):
+        self.power_column = power_column
+        self.tablename = tablename
+        super().__init__(postgresConnection, duration, start, interval)
+
+    def query_string(self):
+        self.qstring = f'SELECT time_bucket(\'{self.interval}m\',datetime) AS "time", avg(value) AS "Erzeugung-PV" \
+FROM eview WHERE datetime BETWEEN \'2022-08-14T22:00:00Z\' AND \'2022-08-15T22:00:00Z\' AND plant = \'FP-JUEL\' \
+GROUP BY 1 ORDER BY 1'

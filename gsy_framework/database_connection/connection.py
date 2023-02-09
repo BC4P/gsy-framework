@@ -12,20 +12,16 @@ class Connection:
         if not os.path.isfile(path_config):
             raise Exception(f"File {path_config} does not exist")
         self.config.read(path_config)
-    
-    #overwrite: need to return the query result
-    def query(self, queryString: str):
-        pass
 
     def getDBName(self):
         return self.db
     
-    #overwrite: check database connection
-    def check(self):
+    #overwrite: need to return the query result
+    def query(self, queryString: str):
         pass
     
-    #overwrite: close db connection
-    def close(self):
+    #overwrite: check database connection
+    def check(self):
         pass
 
 
@@ -45,14 +41,14 @@ class InfluxConnection(Connection):
         )
         self.db = self.config['InfluxDB']['database']
 
+    def __del__(self):
+        self.client.close()
+
     def query(self, queryString: str):
         return self.client.query(queryString)
     
     def check(self):
         print(self.client.ping())
-
-    def close(self):
-        self.client.close()
 
     
 class PostgreSQLConnection(Connection):
@@ -70,13 +66,12 @@ class PostgreSQLConnection(Connection):
         connection = psycopg2.connect(**params)
         self.client = connection.cursor()
 
-    def close(self):
+    def __del__(self):
         self.client.close()
     
+    def query(self, queryString: str):
+        self.client.execute(queryString)
+        return self.client.fetchall()
+    
     def check(self):
-        print('PostgreSQL database version:')
-        self.client.execute('SELECT version()')
-
-        # display the PostgreSQL database server version
-        db_version = self.client.fetchone()
-        print(db_version)
+        print(self.query('SELECT version()'))

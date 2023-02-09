@@ -1,61 +1,13 @@
-from gsy_framework.database_connection.connection import Connection, InfluxConnection
+from gsy_framework.database_connection.connection import Connection, InfluxConnection, PostgreSQLConnection
+from gsy_framework.database_connection.queries_base import Query
 from gsy_framework.constants_limits import GlobalConfig
 from pendulum import duration
 import pandas as pd
 import os
 import pathlib
 
-# abstract base query class
-class Query:
-    def __init__(self, connection: Connection, duration, start, interval):
-        self.connection = connection
-        self._set_time(duration, start, interval)
-        self.query_string()
-
-    def _set_time(self, duration, start, interval):
-        self.duration = duration
-        self.start = start
-        self.interval = interval
-        self.end = self.start + self.duration
-
-    def update_query(self, 
-                duration = duration(days=1),
-                start = GlobalConfig.start_date,
-                interval = GlobalConfig.slot_length.in_minutes()):
-        self._set_time(duration, start, interval)
-        self.query_string()
-    
-    #executes query
-    def exec(self):
-        self.qresults = self.connection.query(self.qstring)
-        return self.transform()
-
-    def get_query_string(self):
-        return self.qstring
-    
-    # defines query string: overwrite this class
-    def query_string(self):
-        self.qstring = ""
-
-    # transforms results of query to dict class, that gets returned: overwrite this class
-    def transform(self):
-        return self.qresults
-
-
-# raw query class (overwriting query string and transformation fucntion with a provided one)
-class RawQuery(Query):
-    def __init__(self, connection: Connection, querystring: str, trans_func):
-        super().__init__(connection)
-        self.qstring = querystring
-        self.procFunc = procFunc
-
-    def exec(self):
-        qresults = super().exec()
-        return self.procFunc(qresults)
-
-
 # abstract class for data from single meter
-class DataQuery(Query):
+class QuerySingle(Query):
     def __init__(self, connection: Connection, duration, start, interval, multiplier):
         self.multiplier = multiplier
         super().__init__(connection, duration, start, interval)
@@ -115,7 +67,7 @@ class QueryAggregated(Query):
         return df_dict
 
 # query for single MQTT devices 
-class DataQueryMQTT(DataQuery):
+class QueryMQTT(QuerySingle):
     def __init__(self, influxConnection: InfluxConnection,
                         power_column: str,
                         device: str,

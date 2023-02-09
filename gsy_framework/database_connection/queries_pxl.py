@@ -1,9 +1,9 @@
-from gsy_framework.database_connection.queries import DataQuery
+from gsy_framework.database_connection.queries_influx import QuerySingle
 from gsy_framework.database_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
 from pendulum import duration
 
-class DataQueryPXL(DataQuery):
+class QueryPXL(QuerySingle):
     def __init__(self, influxConnection: InfluxConnection,
                         power_column: str,
                         tablename: str,

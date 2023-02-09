@@ -1,10 +1,10 @@
-from gsy_framework.database_connection.queries import QueryAggregated
-from gsy_framework.database_connection.connection import Connection
+from gsy_framework.database_connection.queries_influx import QueryAggregated
+from gsy_framework.database_connection.connection import InfluxConnection
 from gsy_framework.constants_limits import GlobalConfig
 from pendulum import duration
 
-class DataQueryEupen(QueryAggregated):
-    def __init__(self, influxConnection: Connection,
+class QueryEupen(QueryAggregated):
+    def __init__(self, influxConnection: InfluxConnection,
                         power_column: str,
                         location: str,
                         key: str,
