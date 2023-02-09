@@ -14,5 +14,5 @@ class QueryPostgresSQL(Query):
             print("Load Profile for Query:\n" + self.qstring + "\nnot valid. Using Zero Curve.")
             return os.path.join(pathlib.Path(__file__).parent.resolve(), "resources", "Zero_Curve.csv")
 
-        dic = {k.strftime("%H:%M"):v for k,v in self.qresults}
+        dic = {k.strftime("%H:%M"):v*1000.0 for k,v in self.qresults}
         return dic

@@ -70,17 +70,15 @@ class QueryFHACAggregated(QueryAggregated):
 
 class QueryFHACPV(QueryPostgresSQL):
     def __init__(self, postgresConnection: PostgreSQLConnection,
-                        power_column: str,
+                        plant: str,
                         tablename: str,
                         duration = duration(days=1),
                         start = GlobalConfig.start_date,
                         interval = GlobalConfig.slot_length.in_minutes()
                         ):
-        self.power_column = power_column
+        self.plant = plant
         self.tablename = tablename
         super().__init__(postgresConnection, duration, start, interval)
 
     def query_string(self):
-        self.qstring = f'SELECT time_bucket(\'{self.interval}m\',datetime) AS "time", avg(value) AS "Erzeugung-PV" \
-FROM eview WHERE datetime BETWEEN \'2022-08-14T22:00:00Z\' AND \'2022-08-15T22:00:00Z\' AND plant = \'FP-JUEL\' \
-GROUP BY 1 ORDER BY 1'
+        self.qstring = f'SELECT time_bucket(\'{self.interval}m\',datetime), avg(value) FROM {self.tablename} WHERE datetime BETWEEN \'{self.start.to_datetime_string()}\' AND \'{self.end.to_datetime_string()}\' AND plant = \'{self.plant}\' GROUP BY 1 ORDER BY 1'
