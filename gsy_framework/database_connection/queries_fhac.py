@@ -7,7 +7,7 @@ from pendulum import duration
 
 class QuerySmartmeterID(QueryRaw):
     def __init__(self, influxConnection: InfluxConnection, keyname: str):
-        qstring = f'SHOW TAG VALUES ON "{self.connection.getDBName()}" WITH KEY IN ("{keyname}")'
+        qstring = f'SHOW TAG VALUES ON "{influxConnection.getDBName()}" WITH KEY IN ("{keyname}")'
 
         def transform():
             return [point["value"] for point in list(self.qresults.get_points())]
@@ -51,7 +51,7 @@ class QueryFHAC(QuerySingle):
         super().__init__(influxConnection, duration, start, interval, multiplier)
 
     def query_string(self):
-        self.qstring = f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "id" = \'{self.smartmeterID}\' AND time >= \'{self.start.to_datetime_string()}\' AND time <= \'{self.end.to_datetime_string()}\' GROUP BY time({self.nterval}m) fill(0)'
+        self.qstring = f'SELECT mean("{self.power_column}") FROM "{self.tablename}" WHERE "id" = \'{self.smartmeterID}\' AND time >= \'{self.start.to_datetime_string()}\' AND time <= \'{self.end.to_datetime_string()}\' GROUP BY time({self.interval}m) fill(0)'
 
 class QueryFHACAggregated(QueryAggregated):
     def __init__(self, influxConnection: InfluxConnection,

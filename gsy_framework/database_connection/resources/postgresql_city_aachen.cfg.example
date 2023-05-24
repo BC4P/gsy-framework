@@ -1,0 +1,8 @@
+# !!! replace username and password !!!
+
+[PostgreSQL]
+user = xxx
+password = xxx
+host = timescale.nowum.fh-aachen.de
+dbname = eview
+port = 5432

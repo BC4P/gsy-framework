@@ -49,6 +49,6 @@ class QueryRaw(Query):
         self.qstring = querystring
         self.transform = transform
 
-    def exec(self):
-        qresults = self.connection.query(self.qstring)
-        return self.transform(qresults)
+    # def exec(self):
+    #     self.qresults = self.connection.query(self.qstring)
+    #     return self.transform()
