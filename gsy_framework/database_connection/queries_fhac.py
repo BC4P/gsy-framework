@@ -72,13 +72,14 @@ class QueryFHACPV(QueryPostgresSQL):
     def __init__(self, postgresConnection: PostgreSQLConnection,
                         plant: str,
                         tablename: str,
+                        multiplier=1.0,
                         duration = duration(days=1),
                         start = GlobalConfig.start_date,
                         interval = GlobalConfig.slot_length.in_minutes()
                         ):
         self.plant = plant
         self.tablename = tablename
-        super().__init__(postgresConnection, duration, start, interval)
+        super().__init__(postgresConnection, duration, start, interval, multiplier)
 
     def query_string(self):
         self.qstring = f'SELECT time_bucket(\'{self.interval}m\',datetime), avg(value) FROM {self.tablename} WHERE datetime BETWEEN \'{self.start.to_datetime_string()}\' AND \'{self.end.to_datetime_string()}\' AND plant = \'{self.plant}\' GROUP BY 1 ORDER BY 1'
